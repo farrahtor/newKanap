@@ -4,8 +4,8 @@
 async function getCartInLocalStorage() {
   let cartInLocalStorage = await JSON.parse(localStorage.getItem("cart"));
   if (cartInLocalStorage == null) {
-    cartInLocalStorage = [];
     document.querySelector("h1").innerHTML = `Votre Panier est vide`;
+    cartInLocalStorage = [];
   }
   return cartInLocalStorage;
 }
@@ -19,11 +19,11 @@ async function getDataProduct() {
 // Récuprer les details du produit présent dans le panier depuis l'api
 // les mettre dans un nouveau tableau
 async function getCartProduct() {
+  let cart = await getCartInLocalStorage();
   let data = await getDataProduct();
-  let cartInLocalStorage = await getCartInLocalStorage();
   let productDisplay = [];
 
-  for (let product of cartInLocalStorage) {
+  for (let product of cart) {
     let foundProduct = data.find((p) => p._id == product._id);
 
     if (foundProduct) {
@@ -43,6 +43,8 @@ async function cartDisplay() {
   // //afficher les produit
   const cartItems = document.getElementById("cart__items");
   for (let product of productDisplay) {
+    console.log(product);
+
     cartItems.innerHTML += `<article class="cart__item" data-id="${
       product._id
     }" data-color="${product.color}">
@@ -68,6 +70,7 @@ async function cartDisplay() {
       </div>
     </div>
   </article>`;
+    deleteProduct(product);
   }
 
   // //afficher quantité et prix total
@@ -84,24 +87,19 @@ async function cartDisplay() {
 
   cartTotal();
   changeQuantity();
+  deleteProduct();
 }
 console.log();
-cartDisplay();
 
 //Modifier la quantité de produit
 async function changeQuantity() {
   let cartInLocalStorage = await getCartInLocalStorage();
-  // let productDisplay = await getCartProduct();
   const inputQuantity = document.querySelectorAll(".itemQuantity");
   for (let input of inputQuantity) {
     input.addEventListener("change", (e) => {
       const productData = input.closest("article");
-      const priceDisplay = document.querySelectorAll(
-        ".cart__item__content__description p:last-child"
-      );
       let newValue = parseInt(e.target.value);
       input.innerText = newValue;
-
       // enregistré la nouvelle quantité dans le localStorage
       for (let product of cartInLocalStorage) {
         if (
@@ -112,37 +110,26 @@ async function changeQuantity() {
           localStorage.setItem("cart", JSON.stringify(cartInLocalStorage));
         }
       }
-      // changer le prix
-      newPrice(newValue, productData);
-      console.log();
-      // document.querySelector(
-      //   ".cart__item__content__description p:last-child"
-      // ).innerText = price.response;
-      // window.location.href = "cart.html";
-      // location.reload();
-      //modifier le prix du produit
+      window.location.reload();
     });
   }
 }
+cartDisplay();
 console.log();
-async function newPrice(newValue, productData) {
-  let productDisplay = await getCartProduct();
-  const priceDisplay = document.querySelectorAll(
-    ".cart__item__content__description p:last-child"
-  );
 
-  for (let product of productDisplay) {
-    if (product._id == productData.dataset.id) {
-      console.log(product.price);
-      let productPrice = product.price * newValue;
-      console.log();
-      for (let price of priceDisplay) {
-        const pPrice = price.closest("article");
-        console.log(pPrice.dataset.id);
-        price.innerText = productPrice;
+// Supprimer un produit
+async function deleteProduct(product) {
+  let cartInLocalStorage = await getCartInLocalStorage();
+  let btnDelete = document.querySelectorAll(".deleteItem");
+  for (let btn of btnDelete) {
+    btn.addEventListener("click", (e) => {
+      const foundProduct = cartInLocalStorage.filter(
+        (p) => p._id != product.id && p.color != product.color
+      );
+      if (foundProduct != undefined) {
+        localStorage.setItem("cart", JSON.stringify(foundProduct));
+        window.location.reload();
       }
-    }
+    });
   }
-
-  console.log();
 }
